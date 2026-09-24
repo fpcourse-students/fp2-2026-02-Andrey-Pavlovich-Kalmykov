@@ -1,14 +1,13 @@
--- | Домашка 2. Параметрический полиморфизм: уровень 2.
-
 -- Инстанс Functor для Vec из "Defs" объявляется здесь как задача 2.3, поэтому он orphan.
 {-# OPTIONS_GHC -Wno-orphans #-}
+
+-- | Домашка 2. Параметрический полиморфизм: уровень 2.
 module Level2 where
 
 import Data.Kind (Type)
 import Defs
 import GHC.TypeLits (Symbol)
 import MetaUtils (todo)
-
 
 -- 2.1. Формулы: продвижение вручную
 --
@@ -19,12 +18,21 @@ import MetaUtils (todo)
 -- скобок; приоритеты своим операторам можно не назначать.
 
 data A
+
 data B
 
 -- Здесь ваши объявления Var', Not', ::\/, ::/\ и ::->.
+data Var' name
 
-type PropExample = Todo
+data Not' expr
 
+data left ::\/ right
+
+data left ::/\ right
+
+data left ::-> right
+
+type PropExample = Var' A ::\/ Var' B ::-> (Not' (Var' A) ::-> Var' B)
 
 -- 2.2. Формулы: DataKinds
 --
@@ -35,7 +43,6 @@ type PropExample = Todo
 type PropDataExample :: Type -- Здесь ваш кайнд.
 type PropDataExample = Todo
 
-
 -- 2.3. Функтор
 --
 -- Реализуйте Functor для вектора. Заметьте, что типы полностью обеспечивают выполнение
@@ -43,7 +50,6 @@ type PropDataExample = Todo
 
 instance Functor (Vec n) where
   fmap = todo "2.3"
-
 
 -- 2.4. Конкатенация
 --
@@ -58,7 +64,6 @@ type family NatPlus (n :: Nat) (m :: Nat) :: Nat where
 vconcat :: Vec n a -> Vec m a -> Vec (NatPlus n m) a
 vconcat = todo "2.4"
 
-
 -- 2.5. Гетерогенный zip
 --
 -- Реализуйте hzip двух гетерогенных списков. Список типов результата считает семейство Zip:
@@ -70,7 +75,6 @@ type family Zip (as :: [Type]) (bs :: [Type]) :: [Type] where
 
 hzip :: HList as -> HList bs -> HList (Zip as bs)
 hzip = todo "2.5"
-
 
 -- 2.6. Полиморфизм в кайндах
 --
@@ -87,7 +91,6 @@ type Temperature = Tagged -- Заглушка: кайнд Temperature пока �
 
 c2f :: Temperature Celsius Double -> Temperature Fahrenheit Double
 c2f = todo "2.6"
-
 
 -- 2.7. Числа Чёрча в обёртке
 --
@@ -116,7 +119,6 @@ mult = todo "2.7 mult"
 
 fromInt :: Int -> Church
 fromInt = todo "2.7 fromInt"
-
 
 -- 2.8. Пара Чёрча
 --
