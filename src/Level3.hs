@@ -12,5 +12,5 @@ import MetaUtils (todo)
 -- сигнатура не нарушает запрет на связыватели, полиморфные по представлению, и зачем
 -- error вообще полиморфна по представлению.
 
-error' :: String -> a -- Заглушка: сигнатуру нужно поправить.
-error' = todo "3.1"
+error' :: forall (r :: RuntimeRep) (a :: TYPE r) . String -> a
+error' str = error str
