@@ -1,14 +1,13 @@
--- | Домашка 2. Параметрический полиморфизм: уровень 2.
-
 -- Инстанс Functor для Vec из "Defs" объявляется здесь как задача 2.3, поэтому он orphan.
 {-# OPTIONS_GHC -Wno-orphans #-}
+
+-- | Домашка 2. Параметрический полиморфизм: уровень 2.
 module Level2 where
 
 import Data.Kind (Type)
 import Defs
 import GHC.TypeLits (Symbol)
 import MetaUtils (todo)
-
 
 -- 2.1. Формулы: продвижение вручную
 --
@@ -19,12 +18,21 @@ import MetaUtils (todo)
 -- скобок; приоритеты своим операторам можно не назначать.
 
 data A
+
 data B
 
 -- Здесь ваши объявления Var', Not', ::\/, ::/\ и ::->.
+data Var' name
 
-type PropExample = Todo
+data Not' expr
 
+data left ::\/ right
+
+data left ::/\ right
+
+data left ::-> right
+
+type PropExample = Var' A ::\/ Var' B ::-> (Not' (Var' A) ::-> Var' B)
 
 -- 2.2. Формулы: DataKinds
 --
@@ -32,9 +40,8 @@ type PropExample = Todo
 -- и строки уровня типов (кайнд Symbol, переменные "a" и "b"). Припишите PropDataExample
 -- точный кайнд явно — сейчас в заглушке стоит неверный.
 
-type PropDataExample :: Type -- Здесь ваш кайнд.
-type PropDataExample = Todo
-
+type PropDataExample :: Prop Symbol -- Здесь ваш кайнд.
+type PropDataExample = Var "a" :\/ Var "b" :-> (Not (Var "a") :-> Var "b")
 
 -- 2.3. Функтор
 --
@@ -42,8 +49,8 @@ type PropDataExample = Todo
 -- законов функтора.
 
 instance Functor (Vec n) where
-  fmap = todo "2.3"
-
+  fmap _ VNil = VNil
+  fmap f (VCons el tail) = VCons (f el) $ fmap f tail
 
 -- 2.4. Конкатенация
 --
@@ -56,8 +63,8 @@ type family NatPlus (n :: Nat) (m :: Nat) :: Nat where
   NatPlus (Suc n) m = Suc (NatPlus n m)
 
 vconcat :: Vec n a -> Vec m a -> Vec (NatPlus n m) a
-vconcat = todo "2.4"
-
+vconcat VNil vec = vec
+vconcat (VCons el tail) vec = VCons el $ vconcat tail vec
 
 -- 2.5. Гетерогенный zip
 --
@@ -66,11 +73,14 @@ vconcat = todo "2.4"
 -- в том числе разной длины (лишний хвост отбрасывается, как у обычного zip).
 
 type family Zip (as :: [Type]) (bs :: [Type]) :: [Type] where
-  Zip as bs = '[] -- Заглушка: замените уравнениями.
+  Zip (a : as) (b : bs) = (a, b) : Zip as bs
+  Zip '[] bs = '[]
+  Zip as '[] = '[]
 
 hzip :: HList as -> HList bs -> HList (Zip as bs)
-hzip = todo "2.5"
-
+hzip (HCons a atail) (HCons b btail) = HCons (a, b) $ hzip atail btail
+hzip HNil _ = HNil
+hzip _ HNil = HNil
 
 -- 2.6. Полиморфизм в кайндах
 --
@@ -83,11 +93,10 @@ newtype Tagged (tag :: k) (a :: Type) = MkTagged a
 
 data TemperatureUnit = Celsius | Fahrenheit | Kelvin
 
-type Temperature = Tagged -- Заглушка: кайнд Temperature пока полиморфен.
+type Temperature = Tagged @TemperatureUnit
 
 c2f :: Temperature Celsius Double -> Temperature Fahrenheit Double
-c2f = todo "2.6"
-
+c2f (MkTagged t) = MkTagged $ t * 1.8 + 32
 
 -- 2.7. Числа Чёрча в обёртке
 --
@@ -103,20 +112,20 @@ toInt :: Church -> Int
 toInt (Church n) = n (+ 1) 0
 
 zero :: Church
-zero = todo "2.7 zero"
+zero = Church (\_ ini -> ini)
 
 suc :: Church -> Church
-suc = todo "2.7 suc"
+suc (Church h) = Church (\f ini -> f $ h f ini)
 
 plus :: Church -> Church -> Church
-plus = todo "2.7 plus"
+plus (Church h) (Church g) = Church (\f ini -> g f $ h f ini)
 
 mult :: Church -> Church -> Church
-mult = todo "2.7 mult"
+mult (Church n) m = n (plus m) zero
 
 fromInt :: Int -> Church
-fromInt = todo "2.7 fromInt"
-
+fromInt 0 = zero
+fromInt n = suc $ fromInt (n - 1)
 
 -- 2.8. Пара Чёрча
 --
@@ -132,7 +141,7 @@ pfst :: Pair a b -> a
 pfst p = p const
 
 psnd :: Pair a b -> b
-psnd _ = todo "2.8 psnd"
+psnd p = p $ flip const
 
 pswap :: Pair a b -> Pair b a
-pswap _ = todo "2.8 pswap"
+pswap p = uncurry pair $ p $ flip (,)

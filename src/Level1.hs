@@ -7,7 +7,6 @@ module Level1 where
 import Defs
 import MetaUtils (todo)
 
-
 -- 1.1. Дерево на уровне типов
 --
 -- Дано дерево Tree. Оно уже поднято на уровень типов вручную, без DataKinds: пустые типы
@@ -17,10 +16,10 @@ import MetaUtils (todo)
 data Tree = Leaf | Node Tree Tree
 
 data Leaf'
+
 data Node' left right
 
-type TreeExample = Todo
-
+type TreeExample = Node' (Node' Leaf' Leaf') Leaf'
 
 -- 1.2. Безопасный zip
 --
@@ -28,8 +27,8 @@ type TreeExample = Todo
 -- реализовать неправильно: любая ошибка не пройдёт проверку типов.
 
 vzip :: Vec n a -> Vec n b -> Vec n (a, b)
-vzip = todo "1.2"
-
+vzip VNil VNil = VNil
+vzip (VCons x xs) (VCons y ys) = VCons (x, y) (vzip xs ys)
 
 -- 1.3. Добавление в конец
 --
@@ -38,8 +37,8 @@ vzip = todo "1.2"
 -- дыру `_` и читайте, какой тип и какие равенства GHC от вас ожидает в каждой ветке.
 
 snoc :: Vec n a -> a -> Vec (Suc n) a
-snoc = todo "1.3"
-
+snoc VNil el = VCons el VNil
+snoc (VCons x xs) el = VCons x $ snoc xs el
 
 -- 1.4. Типизированный интерпретатор
 --
@@ -61,9 +60,9 @@ eval = \case
   Const x -> x
   IsZero e -> eval e == 0
   If c t e -> if eval c then eval t else eval e
-  App _ _ -> todo "1.4 eval App"
-  MkPair _ _ -> todo "1.4 eval MkPair"
-  Fst _ -> todo "1.4 eval Fst"
+  App fun arg -> eval fun $ eval arg
+  MkPair a b -> (eval a, eval b)
+  Fst p -> fst $ eval p
 
 factorial :: Int -> Int
-factorial = todo "1.4 factorial"
+factorial n = eval $ If (IsZero $ Const n) (Const 1) (Const $ n * (factorial $ n - 1))
